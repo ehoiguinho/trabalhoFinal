@@ -12,8 +12,23 @@ app.use(cookieParser());
 var lista_usuarios = [];
 var mensagens = [];
 
+app.use(session({
+    secret: "cheetos",
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 30
+    }
+}))
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(process.cwd(), "src")));
+app.get("/deslogar", desligar);
+
+function desligar(requisicao, resposta) {
+    requisicao.session.usuarioAutenticado = false;
+    resposta.redirect("/login.html");
+}
 
 function reconhecerUsuario(requisicao, resposta, next) {
     if (requisicao.session.usuarioAutenticado) {
@@ -24,14 +39,7 @@ function reconhecerUsuario(requisicao, resposta, next) {
     }
 }
 
-app.use(session({
-    secret: "cheetos",
-    resave: true,
-    saveUninitialized: true,
-    cookie: {
-      maxAge: 1000 * 60 * 30
-    }
-}))
+
 
 app.post('/login', (requisicao, resposta) => {
     const usuario = requisicao.body.nome;
@@ -158,7 +166,7 @@ app.post(`/cadastrar`, (requisicao, resposta) => {
 
         }
         
-        p{
+        .p{
             color: red;
         }
     </style>
@@ -171,7 +179,7 @@ app.post(`/cadastrar`, (requisicao, resposta) => {
     <form action="/cadastrar" method="post">
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome"placeholder="Nome de usuário">
-                    <p>Necessita de 3 caracteres válidos ou mais!</p>`
+                    <p class="p">Necessita de 3 caracteres válidos ou mais!</p>`
     }else{
         var conteudo = `<!DOCTYPE html>
         <html lang="pt-br">
@@ -248,7 +256,7 @@ app.post(`/cadastrar`, (requisicao, resposta) => {
         conteudo +=`
         <label for="email">E-mail:</label>
         <input type="email" id="email" name="email" value ="${requisicao.body.email}">
-        <p>Caracteres inválidos!</p>`
+        <p class="p">Caracteres inválidos!</p>`
     }else{
       conteudo +=`
       <label for="email">E-mail:</label>
@@ -270,7 +278,7 @@ app.post(`/cadastrar`, (requisicao, resposta) => {
     passou = 0;
     conteudo +=`<label for="idade">Idade:</label>
     <input type="number" id="idade" name="idade" value ="${requisicao.body.idade}">
-    <p>Este campo está invalido.</p>
+    <p class="p">Este campo está invalido.</p>
     <button type="submit">Cadastrar</button>
 </form>
 <ul><!-- ListaCadastrados --></ul>
@@ -401,7 +409,21 @@ app.get(`/`, reconhecerUsuario, (requisicao, resposta) => {
         background-color: #0056b3;
     }
     </style>
-    <h1><a href="/cadastro.html">Cadastrar usuário</a></h1><br><h1><a href="/chat">Chat</a></h1><br><h2>Ultima visita foi em ${ultimaVisita}</h2>`);
+    <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; text-align: center;">
+
+  <h1>
+    <a href="/cadastro.html" style="background-color: #4CAF50; border-radius: 5px; #4CAF50; color: white; padding: 10px; text-decoration: none; border-right: 2px solid white;">Cadastrar Usuário</a>
+  </h1>
+
+  <h1>
+    <a href="/chat" style="background-color: #4CAF50; border-radius: 5px; color: white; padding: 10px; text-decoration: none;">Chat</a>
+  </h1>
+  <h1>
+    <a href="/deslogar" style="background-color: #4CAF50; border-radius: 5px; color: white; padding: 10px; text-decoration: none;">Sair</a>
+  </h1>
+
+  <h2>Última visita foi em ${ultimaVisita}</h2>
+</body>`);
    
 });
 
@@ -529,16 +551,29 @@ app.get('/chat', reconhecerUsuario, (requisicao, resposta) => {
   
       <button type="submit">Enviar</button>
       </form>      
-      <a href="/">Voltar ao menu</a><br>
+      <style>
+  a {
+    display: inline-block;
+    padding: 10px 20px;
+    text-decoration: none;
+    background-color: #4CAF50; 
+    color: #fff; 
+    border-radius: 5px; 
+    font-weight: bold;
+  }
+
+  a:hover {
+    background-color: #45a049;
+  }
+</style>
+
+<a href="/">Voltar ao menu</a><br>
     </body>
     <script>
-    // Função para rolar o scroll para o final
     function rolarParaBaixo() {
       var container = document.querySelector('.containerPrincipal');
       container.scrollTop = container.scrollHeight;
     }
-  
-    // Chame a função após adicionar as mensagens
     rolarParaBaixo();
   </script>
     </html>`;
@@ -565,21 +600,26 @@ app.post('/mensagem', reconhecerUsuario, (requisicao, resposta) => {
         resposta.redirect('/chat');
     } else {
         resposta.status(400).send(`
-            <!DOCTYPE html>
-            <html lang="pt-br">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Erro</title>
-            </head>
-            <body>
-                <h1 style="color: red; text-align: center; font-family: Verdana">Mensagem inválida</h1>
-                </br>
-                <div style="text-align: center">
-                    <a style="font-family: Verdana; text-decoration: none; color: royalblue" href="/mensagem">Voltar</a>
-                </div>
-            </body>
-            </html>
+        <!DOCTYPE html>
+        <html lang="pt-br">
+        
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Erro</title>
+        </head>
+        
+        <body style="background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        
+            <h1 style="color: #ff0000; text-align: center;">Mensagem inválida</h1>
+            <br>
+            <div style="text-align: center; margin-top: 20px;">
+                <a style="font-family: Arial, sans-serif; text-decoration: none; color: white; padding: 10px 20px; border: 1px solid #4CAF50; border-radius: 5px; background-color: #4CAF50;" href="/chat">Voltar</a>
+            </div>
+        
+        </body>
+        
+        </html>
         `);
     }
 });
